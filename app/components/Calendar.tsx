@@ -54,14 +54,14 @@ export default function Calendar() {
   const todayTasks = getTasksForToday();
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
       {/* Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         className="text-center"
       >
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Calendar View
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
@@ -75,9 +75,9 @@ export default function Calendar() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="glass rounded-2xl p-6"
+          className="glass rounded-2xl p-4 sm:p-6"
         >
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <CalendarIcon className="w-5 h-5 text-primary-500" />
             Today's Tasks ({todayTasks.length})
           </h2>
@@ -94,10 +94,10 @@ export default function Calendar() {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="glass rounded-2xl p-6"
+        className="glass rounded-2xl p-4 sm:p-6"
       >
         {/* Calendar Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <button
             onClick={prevMonth}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -105,7 +105,7 @@ export default function Calendar() {
             <ChevronLeft className="w-5 h-5" />
           </button>
           
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
             {format(currentDate, 'MMMM yyyy')}
           </h2>
           
@@ -138,13 +138,13 @@ export default function Calendar() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 + index * 0.01 }}
-                className={`min-h-[120px] p-2 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                className={`min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors relative ${
                   isCurrentMonth ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'
                 } ${isCurrentDay ? 'ring-2 ring-primary-500' : ''}`}
                 onClick={() => handleDateClick(day)}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <span className={`text-sm font-medium ${
+                <div className="flex items-center justify-between mb-1 sm:mb-2">
+                  <span className={`text-xs sm:text-sm font-medium ${
                     isCurrentDay 
                       ? 'text-primary-600 dark:text-primary-400' 
                       : isCurrentMonth 
@@ -154,18 +154,18 @@ export default function Calendar() {
                     {format(day, 'd')}
                   </span>
                   {tasksForDay.length > 0 && (
-                    <span className="text-xs bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-1.5 py-0.5 rounded-full">
+                    <span className="text-xs bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-1 py-0.5 rounded-full">
                       {tasksForDay.length}
                     </span>
                   )}
                 </div>
                 
                 {/* Tasks for this day */}
-                <div className="space-y-1">
+                <div className="space-y-0.5 sm:space-y-1">
                   {tasksForDay.slice(0, 2).map((task) => (
                     <div
                       key={task.id}
-                      className={`text-xs p-1 rounded truncate ${
+                      className={`text-xs p-0.5 sm:p-1 rounded truncate ${
                         task.completed 
                           ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 line-through' 
                           : task.priority === 'high'
@@ -190,7 +190,7 @@ export default function Calendar() {
                     e.stopPropagation();
                     handleAddTaskForDate(day);
                   }}
-                  className="absolute top-1 right-1 p-1 rounded-full bg-primary-500 hover:bg-primary-600 text-white opacity-0 hover:opacity-100 transition-opacity"
+                  className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 p-1 rounded-full bg-primary-500 hover:bg-primary-600 text-white opacity-0 hover:opacity-100 transition-opacity"
                   title={`Add task for ${format(day, 'MMM d, yyyy')}`}
                 >
                   <Plus className="w-3 h-3" />
@@ -206,9 +206,9 @@ export default function Calendar() {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="glass rounded-2xl p-6"
+        className="glass rounded-2xl p-4 sm:p-6"
       >
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
           Upcoming Tasks
         </h2>
         <div className="space-y-3">

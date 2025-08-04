@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { Task, Category, ViewMode, FocusMode, AppSettings } from '../types';
+import { Task, Category, ViewMode, AppSettings } from '../types';
 import { defaultCategories, createTask, getTaskStats, filterTasks } from '../utils/taskUtils';
 
 interface TaskState {
@@ -9,29 +9,26 @@ interface TaskState {
   categories: Category[];
   viewMode: ViewMode;
   searchTerm: string;
-  focusMode: FocusMode;
   settings: AppSettings;
   stats: ReturnType<typeof getTaskStats>;
   selectedCategory: string | null;
-  showImportant: boolean;
   showArchived: boolean;
 }
 
 type TaskAction =
   | { type: 'ADD_TASK'; payload: string }
+  | { type: 'ADD_TASK_WITH_PRIORITY'; payload: { input: string; priority: 'low' | 'medium' | 'high' } }
   | { type: 'UPDATE_TASK'; payload: Task }
   | { type: 'DELETE_TASK'; payload: string }
   | { type: 'TOGGLE_TASK'; payload: string }
   | { type: 'ARCHIVE_TASK'; payload: string }
   | { type: 'SET_VIEW_MODE'; payload: ViewMode }
   | { type: 'SET_SEARCH_TERM'; payload: string }
-  | { type: 'TOGGLE_FOCUS_MODE'; payload?: Task }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'LOAD_TASKS'; payload: Task[] }
   | { type: 'LOAD_CATEGORIES'; payload: Category[] }
   | { type: 'SET_SELECTED_CATEGORY'; payload: string | null }
   | { type: 'TOGGLE_IMPORTANT'; payload: string }
-  | { type: 'SET_SHOW_IMPORTANT'; payload: boolean }
   | { type: 'SET_SHOW_ARCHIVED'; payload: boolean };
 
 const initialState: TaskState = {
@@ -39,7 +36,6 @@ const initialState: TaskState = {
   categories: defaultCategories,
   viewMode: 'today',
   searchTerm: '',
-  focusMode: { isActive: false, sessionDuration: 25 },
   settings: {
     theme: 'system',
     notifications: true,
@@ -56,7 +52,6 @@ const initialState: TaskState = {
     categoryBreakdown: {},
   },
   selectedCategory: null,
-  showImportant: false,
   showArchived: false,
 };
 
@@ -64,6 +59,16 @@ function taskReducer(state: TaskState, action: TaskAction): TaskState {
   switch (action.type) {
     case 'ADD_TASK': {
       const newTask = createTask(action.payload);
+      const updatedTasks = [...state.tasks, newTask];
+      return {
+        ...state,
+        tasks: updatedTasks,
+        stats: getTaskStats(updatedTasks),
+      };
+    }
+    
+    case 'ADD_TASK_WITH_PRIORITY': {
+      const newTask = createTask(action.payload.input, action.payload.priority);
       const updatedTasks = [...state.tasks, newTask];
       return {
         ...state,
@@ -138,22 +143,8 @@ function taskReducer(state: TaskState, action: TaskAction): TaskState {
     case 'SET_SELECTED_CATEGORY':
       return { ...state, selectedCategory: action.payload };
     
-    case 'SET_SHOW_IMPORTANT':
-      return { ...state, showImportant: action.payload };
-    
     case 'SET_SHOW_ARCHIVED':
       return { ...state, showArchived: action.payload };
-    
-    case 'TOGGLE_FOCUS_MODE':
-      return {
-        ...state,
-        focusMode: {
-          ...state.focusMode,
-          isActive: !state.focusMode.isActive,
-          currentTask: action.payload,
-          sessionStart: action.payload ? new Date() : undefined,
-        },
-      };
     
     case 'UPDATE_SETTINGS':
       return {
@@ -181,6 +172,7 @@ interface TaskContextType {
   dispatch: React.Dispatch<TaskAction>;
   filteredTasks: Task[];
   addTask: (input: string) => void;
+  addTaskWithPriority: (input: string, priority: 'low' | 'medium' | 'high') => void;
   updateTask: (task: Task) => void;
   deleteTask: (id: string) => void;
   toggleTask: (id: string) => void;
@@ -189,9 +181,7 @@ interface TaskContextType {
   setViewMode: (mode: ViewMode) => void;
   setSearchTerm: (term: string) => void;
   setSelectedCategory: (category: string | null) => void;
-  setShowImportant: (show: boolean) => void;
   setShowArchived: (show: boolean) => void;
-  toggleFocusMode: (task?: Task) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
 }
 
@@ -237,9 +227,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (state.selectedCategory) {
       // Show all tasks in selected category regardless of date
       filtered = filtered.filter(task => task.category === state.selectedCategory);
-    } else if (state.showImportant) {
-      // Show all important tasks regardless of date
-      filtered = filtered.filter(task => task.priority === 'high');
     } else if (state.showArchived) {
       // Show all archived tasks regardless of date
       filtered = filtered.filter(task => task.archived);
@@ -256,6 +243,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   
   const addTask = (input: string) => {
     dispatch({ type: 'ADD_TASK', payload: input });
+  };
+  
+  const addTaskWithPriority = (input: string, priority: 'low' | 'medium' | 'high') => {
+    dispatch({ type: 'ADD_TASK_WITH_PRIORITY', payload: { input, priority } });
   };
   
   const updateTask = (task: Task) => {
@@ -290,16 +281,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_SELECTED_CATEGORY', payload: category });
   };
 
-  const setShowImportant = (show: boolean) => {
-    dispatch({ type: 'SET_SHOW_IMPORTANT', payload: show });
-  };
-
   const setShowArchived = (show: boolean) => {
     dispatch({ type: 'SET_SHOW_ARCHIVED', payload: show });
-  };
-  
-  const toggleFocusMode = (task?: Task) => {
-    dispatch({ type: 'TOGGLE_FOCUS_MODE', payload: task });
   };
   
   const updateSettings = (settings: Partial<AppSettings>) => {
@@ -311,6 +294,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     dispatch,
     filteredTasks,
     addTask,
+    addTaskWithPriority,
     updateTask,
     deleteTask,
     toggleTask,
@@ -319,9 +303,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setViewMode,
     setSearchTerm,
     setSelectedCategory,
-    setShowImportant,
     setShowArchived,
-    toggleFocusMode,
     updateSettings,
   };
   

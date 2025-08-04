@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Settings, Sun, Moon, Monitor } from 'lucide-react';
+import { Search, Settings, Sun, Moon, Monitor, Menu } from 'lucide-react';
 import { useTaskContext } from '../contexts/TaskContext';
 import { ViewMode } from '../types';
 import SettingsModal from './Settings';
@@ -11,11 +11,15 @@ const navItems: { key: ViewMode; label: string; icon: string }[] = [
   { key: 'today', label: 'Today', icon: 'Calendar' },
   { key: 'upcoming', label: 'Upcoming', icon: 'Clock' },
   { key: 'calendar', label: 'Calendar', icon: 'Calendar' },
-  { key: 'focus', label: 'Focus', icon: 'Target' },
+  { key: 'important', label: 'Important', icon: 'Star' },
   { key: 'stats', label: 'Stats', icon: 'BarChart3' },
 ];
 
-export default function Header() {
+interface HeaderProps {
+  onMobileMenuClick?: () => void;
+}
+
+export default function Header({ onMobileMenuClick }: HeaderProps) {
   const { state, setViewMode, setSearchTerm, updateSettings } = useTaskContext();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -54,16 +58,22 @@ export default function Header() {
         transition={{ duration: 0.3 }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center h-16 relative">
             {/* Logo - Left */}
             <div className="flex items-center">
+              <button
+                onClick={onMobileMenuClick}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mr-2"
+              >
+                <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              </button>
               <h1 className="text-xl font-semibold text-primary-500" style={{ fontFamily: 'Montserrat Alternates, sans-serif', fontWeight: 600 }}>
                 Focus
               </h1>
             </div>
 
             {/* Navigation - Center */}
-            <nav className="hidden md:flex space-x-1">
+            <nav className="hidden md:flex space-x-1 absolute left-1/2 transform -translate-x-1/2">
               {navItems.map((item) => (
                 <button
                   key={item.key}
@@ -78,7 +88,7 @@ export default function Header() {
             </nav>
 
             {/* Search and Actions - Right */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 absolute right-0">
               {/* Search */}
               <div className="relative">
                 {isSearchOpen ? (
@@ -128,13 +138,13 @@ export default function Header() {
           </div>
 
           {/* Mobile Navigation */}
-          <div className="md:hidden py-4">
-            <div className="flex space-x-1 overflow-x-auto">
+          <div className="md:hidden py-3">
+            <div className="flex space-x-1 justify-center">
               {navItems.map((item) => (
                 <button
                   key={item.key}
                   onClick={() => setViewMode(item.key)}
-                  className={`nav-item whitespace-nowrap ${
+                  className={`mobile-nav-item ${
                     state.viewMode === item.key ? 'active' : ''
                   }`}
                 >

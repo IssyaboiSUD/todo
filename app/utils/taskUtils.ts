@@ -71,7 +71,7 @@ export function parseTaskInput(input: string): {
   };
 }
 
-export function createTask(input: string): Task {
+export function createTask(input: string, priority?: 'low' | 'medium' | 'high'): Task {
   const parsed = parseTaskInput(input);
   
   // If no date is provided, set to today
@@ -83,7 +83,7 @@ export function createTask(input: string): Task {
     completed: false,
     category: parsed.category,
     dueDate: dueDate,
-    priority: parsed.priority,
+    priority: priority || parsed.priority,
     tags: parsed.tags,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -139,8 +139,8 @@ export function filterTasks(tasks: Task[], viewMode: string, searchTerm?: string
     case 'upcoming':
       filtered = filtered.filter(t => t.dueDate && t.dueDate > new Date());
       break;
-    case 'focus':
-      filtered = filtered.filter(t => !t.completed);
+    case 'important':
+      filtered = filtered.filter(t => t.priority === 'high');
       break;
   }
   

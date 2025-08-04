@@ -50,13 +50,6 @@ export default function TaskList() {
 
   // Get the appropriate title based on active filters
   const getTitle = () => {
-    if (state.showArchived) return 'Archived Tasks';
-    if (state.showImportant) return 'Important Tasks';
-    if (state.selectedCategory) {
-      const categoryName = state.categories.find(c => c.id === state.selectedCategory)?.name || state.selectedCategory;
-      return `${categoryName} Tasks`;
-    }
-    
     // Default view mode titles
     switch (state.viewMode) {
       case 'today':
@@ -65,8 +58,8 @@ export default function TaskList() {
         return 'Upcoming';
       case 'calendar':
         return 'Calendar';
-      case 'focus':
-        return 'Focus Mode';
+      case 'important':
+        return 'Important Tasks';
       case 'stats':
         return 'Statistics';
       default:

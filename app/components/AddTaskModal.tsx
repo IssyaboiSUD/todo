@@ -14,7 +14,7 @@ interface AddTaskModalProps {
 }
 
 export default function AddTaskModal({ isOpen, onClose, initialDate }: AddTaskModalProps) {
-  const { addTask } = useTaskContext();
+  const { addTask, addTaskWithPriority } = useTaskContext();
   const [input, setInput] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -66,12 +66,13 @@ export default function AddTaskModal({ isOpen, onClose, initialDate }: AddTaskMo
         taskInput += ` ${customDate}`;
       }
       
-      // Add important flag if checked
+      // Use addTaskWithPriority if important is checked, otherwise use regular addTask
       if (isImportant) {
-        taskInput += ' urgent';
+        addTaskWithPriority(taskInput, 'high');
+      } else {
+        addTask(taskInput);
       }
       
-      addTask(taskInput);
       setInput('');
       setIsImportant(false);
       setCustomDate('');

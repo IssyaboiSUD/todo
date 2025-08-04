@@ -45,6 +45,15 @@
   .nav-item.active {
     @apply bg-primary-500 text-white;
   }
+  
+  /* Mobile navigation styles */
+  .mobile-nav-item {
+    @apply px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 cursor-pointer whitespace-nowrap;
+  }
+  
+  .mobile-nav-item.active {
+    @apply bg-primary-500 text-white;
+  }
 }
 
 @layer utilities {

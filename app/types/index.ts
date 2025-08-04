@@ -30,13 +30,6 @@ export interface TaskStats {
   categoryBreakdown: { [key: string]: number };
 }
 
-export interface FocusMode {
-  isActive: boolean;
-  currentTask?: Task;
-  sessionStart?: Date;
-  sessionDuration: number; // in minutes
-}
-
 export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   notifications: boolean;
@@ -45,7 +38,7 @@ export interface AppSettings {
   defaultCategory: string;
 }
 
-export type ViewMode = 'today' | 'upcoming' | 'calendar' | 'focus' | 'stats' | 'all';
+export type ViewMode = 'today' | 'upcoming' | 'calendar' | 'important' | 'stats' | 'all';
 
 export interface DragResult {
   draggableId: string;
