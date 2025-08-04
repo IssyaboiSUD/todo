@@ -14,7 +14,6 @@ export default function TaskList() {
     addTask, 
     setSearchTerm, 
     setSelectedCategory, 
-    setShowImportant, 
     setShowArchived 
   } = useTaskContext();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -30,9 +29,6 @@ export default function TaskList() {
       const categoryName = state.categories.find(c => c.id === state.selectedCategory)?.name || state.selectedCategory;
       filters.push(categoryName);
     }
-    if (state.showImportant) {
-      filters.push('Important');
-    }
     if (state.showArchived) {
       filters.push('Archived');
     }
@@ -41,7 +37,6 @@ export default function TaskList() {
 
   const clearFilters = () => {
     setSelectedCategory(null);
-    setShowImportant(false);
     setShowArchived(false);
   };
 
