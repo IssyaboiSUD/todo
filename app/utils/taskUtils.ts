@@ -86,6 +86,7 @@ export function createTask(input: string, priority?: 'low' | 'medium' | 'high'):
     dueDate: dueDate,
     priority: priority || parsed.priority,
     tags: parsed.tags,
+    notes: '',
     createdAt: new Date(),
     updatedAt: new Date(),
   };

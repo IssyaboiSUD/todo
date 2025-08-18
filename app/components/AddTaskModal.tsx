@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Tag, Repeat, AlertCircle, Star, Clock } from 'lucide-react';
+import { X, Calendar, Tag, Repeat, AlertCircle, Star, Clock, ChevronDown } from 'lucide-react';
 import { useTaskContext } from '../contexts/TaskContext';
 import { parseTaskInput } from '../utils/taskUtils';
 import { format } from 'date-fns';
+import CalendarPicker from './CalendarPicker';
 
 interface AddTaskModalProps {
   isOpen: boolean;
@@ -19,8 +20,10 @@ export default function AddTaskModal({ isOpen, onClose, initialDate }: AddTaskMo
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isImportant, setIsImportant] = useState(false);
-  const [customDate, setCustomDate] = useState('');
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
   const [useCustomDate, setUseCustomDate] = useState(false);
+  const [showCalendarPicker, setShowCalendarPicker] = useState(false);
+  const dateButtonRef = useRef<HTMLButtonElement>(null);
 
   const commonTasks = [
     'Buy groceries tomorrow',
@@ -36,10 +39,10 @@ export default function AddTaskModal({ isOpen, onClose, initialDate }: AddTaskMo
   // Set initial date when modal opens
   useEffect(() => {
     if (isOpen && initialDate) {
-      setCustomDate(format(initialDate, 'yyyy-MM-dd'));
+      setCustomDate(initialDate);
       setUseCustomDate(true);
     } else if (isOpen) {
-      setCustomDate('');
+      setCustomDate(undefined);
       setUseCustomDate(false);
     }
   }, [isOpen, initialDate]);
@@ -63,7 +66,7 @@ export default function AddTaskModal({ isOpen, onClose, initialDate }: AddTaskMo
       
       // Add custom date if specified
       if (useCustomDate && customDate) {
-        taskInput += ` ${customDate}`;
+        taskInput += ` ${format(customDate, 'yyyy-MM-dd')}`;
       }
       
       // Use addTaskWithPriority if important is checked, otherwise use regular addTask
@@ -75,7 +78,7 @@ export default function AddTaskModal({ isOpen, onClose, initialDate }: AddTaskMo
       
       setInput('');
       setIsImportant(false);
-      setCustomDate('');
+      setCustomDate(undefined);
       setUseCustomDate(false);
       onClose();
     }
@@ -245,12 +248,38 @@ export default function AddTaskModal({ isOpen, onClose, initialDate }: AddTaskMo
                     </button>
                     
                     {useCustomDate && (
-                      <input
-                        type="date"
-                        value={customDate}
-                        onChange={(e) => setCustomDate(e.target.value)}
-                        className="glass-input px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      />
+                      <div className="relative">
+                        <button
+                          ref={dateButtonRef}
+                          onClick={() => setShowCalendarPicker(!showCalendarPicker)}
+                          className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        >
+                          <Calendar className="w-4 h-4 text-gray-500" />
+                          {customDate ? (
+                            <span className="text-gray-900 dark:text-white text-sm">
+                              {format(customDate, 'MMM dd, yyyy')}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 dark:text-gray-500 text-sm">
+                              Select date
+                            </span>
+                          )}
+                          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                            showCalendarPicker ? 'rotate-180' : ''
+                          }`} />
+                        </button>
+
+                        <CalendarPicker
+                          isOpen={showCalendarPicker}
+                          value={customDate}
+                          onChange={(date) => {
+                            setCustomDate(date);
+                            setShowCalendarPicker(false);
+                          }}
+                          onClose={() => setShowCalendarPicker(false)}
+                          triggerRef={dateButtonRef}
+                        />
+                      </div>
                     )}
                   </div>
                 </div>

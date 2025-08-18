@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSwipeable } from 'react-swipeable';
+import { useRouter } from 'next/navigation';
 import { 
   CheckCircle, 
   Circle, 
@@ -28,6 +29,7 @@ interface TaskCardProps {
 
 export default function TaskCard({ task, index }: TaskCardProps) {
   const { toggleTask, deleteTask, updateTask, toggleImportant, updateTaskStatus } = useTaskContext();
+  const router = useRouter();
   const [showActions, setShowActions] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -144,15 +146,21 @@ export default function TaskCard({ task, index }: TaskCardProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h3 
-                  className={`text-sm font-medium ${
-                    task.status === 'done'
-                      ? 'line-through text-gray-500' 
-                      : 'text-gray-900 dark:text-white'
-                  }`}
+                <button
+                  onClick={() => router.push(`/task/${task.id}`)}
+                  className="text-left w-full group"
                 >
-                  {task.title}
-                </h3>
+                  <h3 
+                    className={`text-sm font-medium group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors ${
+                      task.status === 'done'
+                        ? 'line-through text-gray-500' 
+                        : 'text-gray-900 dark:text-white'
+                    }`}
+                  >
+                    {task.title}
+                  </h3>
+                  <div className="w-0 group-hover:w-full h-0.5 bg-primary-500 transition-all duration-300 ease-out mt-1" />
+                </button>
                 
                 {task.description && (
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
@@ -295,13 +303,13 @@ export default function TaskCard({ task, index }: TaskCardProps) {
               <div className="p-2 space-y-1">
                 <button
                   onClick={() => {
-                    setIsEditModalOpen(true);
+                    router.push(`/task/${task.id}`);
                     setShowActions(false);
                   }}
                   className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 transition-colors"
                 >
                   <Edit className="w-4 h-4" />
-                  Edit
+                  View Details
                 </button>
                 <button
                   onClick={() => {
@@ -325,6 +333,7 @@ export default function TaskCard({ task, index }: TaskCardProps) {
         onClose={() => setIsEditModalOpen(false)}
         task={task}
       />
+
     </>
   );
 } 
