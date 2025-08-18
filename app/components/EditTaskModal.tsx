@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Tag, Star, Clock } from 'lucide-react';
 import { useTaskContext } from '../contexts/TaskContext';
 import { Task } from '../types';
+import StatusSelector from './StatusSelector';
 
 interface EditTaskModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export default function EditTaskModal({ isOpen, onClose, task }: EditTaskModalPr
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [status, setStatus] = useState<'open' | 'in-progress' | 'done'>('open');
   const [dueDate, setDueDate] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
@@ -28,6 +30,7 @@ export default function EditTaskModal({ isOpen, onClose, task }: EditTaskModalPr
       setDescription(task.description || '');
       setCategory(task.category);
       setPriority(task.priority);
+      setStatus(task.status);
       setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
       setTags(task.tags);
     }
@@ -42,6 +45,7 @@ export default function EditTaskModal({ isOpen, onClose, task }: EditTaskModalPr
         description: description.trim() || undefined,
         category,
         priority,
+        status,
         dueDate: dueDate ? new Date(dueDate) : undefined,
         tags,
         updatedAt: new Date(),
@@ -141,6 +145,21 @@ export default function EditTaskModal({ isOpen, onClose, task }: EditTaskModalPr
                     rows={3}
                     placeholder="Add a description..."
                   />
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Status
+                  </label>
+                  <StatusSelector
+                    value={status}
+                    onChange={setStatus}
+                    size="md"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Note: Tasks marked as "Completed" will automatically be treated as done
+                  </p>
                 </div>
 
                 {/* Category */}

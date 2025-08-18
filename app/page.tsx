@@ -48,6 +48,10 @@ export default function Home() {
             e.preventDefault();
             setViewMode('stats');
             break;
+          case 'n':
+            e.preventDefault();
+            // This will be handled by the TaskList component
+            break;
         }
       }
     };
@@ -85,6 +89,7 @@ export default function Home() {
           <span>⌘3: Calendar</span>
           <span>⌘4: Important</span>
           <span>⌘5: Stats</span>
+          <span>⌘N: New Task</span>
         </div>
       </div>
     </div>

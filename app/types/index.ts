@@ -3,13 +3,13 @@ export interface Task {
   title: string;
   description?: string;
   completed: boolean;
+  status: 'open' | 'in-progress' | 'done';
   dueDate?: Date;
   category: string;
   priority: 'low' | 'medium' | 'high';
   repeat?: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
   createdAt: Date;
   updatedAt: Date;
-  archived: boolean;
   tags: string[];
 }
 

@@ -23,13 +23,13 @@ export default function Calendar() {
 
   const getTasksForDate = (date: Date) => {
     return state.tasks.filter(task => 
-      task.dueDate && isSameDay(new Date(task.dueDate), date) && !task.archived
+      task.dueDate && isSameDay(new Date(task.dueDate), date)
     );
   };
 
-  const getTasksForToday = () => {
+  const getTodayTasks = () => {
     return state.tasks.filter(task => 
-      task.dueDate && isSameDay(new Date(task.dueDate), new Date()) && !task.archived
+      task.dueDate && isSameDay(new Date(task.dueDate), new Date())
     );
   };
 
@@ -51,7 +51,7 @@ export default function Calendar() {
     setIsAddModalOpen(true);
   };
 
-  const todayTasks = getTasksForToday();
+  const todayTasks = getTodayTasks();
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
@@ -213,7 +213,7 @@ export default function Calendar() {
         </h2>
         <div className="space-y-3">
           {state.tasks
-            .filter(task => task.dueDate && new Date(task.dueDate) > new Date() && !task.archived)
+            .filter(task => task.dueDate && new Date(task.dueDate) > new Date())
             .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
             .slice(0, 5)
             .map((task, index) => (

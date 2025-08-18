@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Folder, Archive, Trash2, X } from 'lucide-react';
+import { Plus, Folder, Trash2, X } from 'lucide-react';
 import { useTaskContext } from '../contexts/TaskContext';
 import { getCategoryColor, getCategoryIcon } from '../utils/taskUtils';
 import AddTaskModal from './AddTaskModal';
@@ -13,12 +13,12 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
-  const { state, setSelectedCategory, setShowArchived } = useTaskContext();
+  const { state, setSelectedCategory } = useTaskContext();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const getCategoryCount = (categoryId: string) => {
     return state.tasks.filter(task => 
-      task.category === categoryId && !task.archived && !task.completed
+      task.category === categoryId && !task.completed
     ).length;
   };
 
@@ -39,18 +39,8 @@ export default function Sidebar({ isMobileOpen = false, onMobileClose }: Sidebar
       setSelectedCategory(null); // Deselect if already selected
     } else {
       setSelectedCategory(categoryId);
-      setShowArchived(false); // Clear archive filter
     }
     // Close mobile sidebar when category is selected
-    if (onMobileClose) {
-      onMobileClose();
-    }
-  };
-
-  const handleArchiveClick = () => {
-    setShowArchived(!state.showArchived);
-    setSelectedCategory(null); // Clear category filter
-    // Close mobile sidebar when archive is clicked
     if (onMobileClose) {
       onMobileClose();
     }
@@ -89,18 +79,6 @@ export default function Sidebar({ isMobileOpen = false, onMobileClose }: Sidebar
           >
             <Plus className="w-4 h-4" />
             <span>Add Task</span>
-          </button>
-          <button 
-            onClick={handleArchiveClick}
-            className={`sidebar-item w-full ${state.showArchived ? 'active' : ''}`}
-          >
-            <Archive className="w-4 h-4" />
-            <span>Archive</span>
-            {state.tasks.filter(task => task.archived).length > 0 && (
-              <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full ml-auto">
-                {state.tasks.filter(task => task.archived).length}
-              </span>
-            )}
           </button>
         </div>
       </div>

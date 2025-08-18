@@ -12,24 +12,22 @@ interface TaskState {
   settings: AppSettings;
   stats: ReturnType<typeof getTaskStats>;
   selectedCategory: string | null;
-  showArchived: boolean;
 }
 
 type TaskAction =
   | { type: 'ADD_TASK'; payload: string }
   | { type: 'ADD_TASK_WITH_PRIORITY'; payload: { input: string; priority: 'low' | 'medium' | 'high' } }
   | { type: 'UPDATE_TASK'; payload: Task }
+  | { type: 'UPDATE_TASK_STATUS'; payload: { id: string; status: 'open' | 'in-progress' | 'done' } }
   | { type: 'DELETE_TASK'; payload: string }
   | { type: 'TOGGLE_TASK'; payload: string }
-  | { type: 'ARCHIVE_TASK'; payload: string }
   | { type: 'SET_VIEW_MODE'; payload: ViewMode }
   | { type: 'SET_SEARCH_TERM'; payload: string }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'LOAD_TASKS'; payload: Task[] }
   | { type: 'LOAD_CATEGORIES'; payload: Category[] }
   | { type: 'SET_SELECTED_CATEGORY'; payload: string | null }
-  | { type: 'TOGGLE_IMPORTANT'; payload: string }
-  | { type: 'SET_SHOW_ARCHIVED'; payload: boolean };
+  | { type: 'TOGGLE_IMPORTANT'; payload: string };
 
 const initialState: TaskState = {
   tasks: [],
@@ -52,7 +50,6 @@ const initialState: TaskState = {
     categoryBreakdown: {},
   },
   selectedCategory: null,
-  showArchived: false,
 };
 
 function taskReducer(state: TaskState, action: TaskAction): TaskState {
@@ -88,6 +85,24 @@ function taskReducer(state: TaskState, action: TaskAction): TaskState {
       };
     }
     
+    case 'UPDATE_TASK_STATUS': {
+      const updatedTasks = state.tasks.map(task =>
+        task.id === action.payload.id 
+          ? { 
+              ...task, 
+              status: action.payload.status, 
+              completed: action.payload.status === 'done', // Auto-complete when status is done
+              updatedAt: new Date() 
+            } 
+          : task
+      );
+      return {
+        ...state,
+        tasks: updatedTasks,
+        stats: getTaskStats(updatedTasks),
+      };
+    }
+    
     case 'DELETE_TASK': {
       const updatedTasks = state.tasks.filter(task => task.id !== action.payload);
       return {
@@ -100,7 +115,13 @@ function taskReducer(state: TaskState, action: TaskAction): TaskState {
     case 'TOGGLE_TASK': {
       const updatedTasks = state.tasks.map(task =>
         task.id === action.payload
-          ? { ...task, completed: !task.completed, updatedAt: new Date() }
+          ? { 
+              ...task, 
+              completed: !task.completed, 
+              // Only change status if it's currently "done" and we're uncompleting it
+              status: (!task.completed && task.status === 'done') ? 'open' : task.status,
+              updatedAt: new Date() 
+            }
           : task
       );
       return {
@@ -110,17 +131,6 @@ function taskReducer(state: TaskState, action: TaskAction): TaskState {
       };
     }
     
-    case 'ARCHIVE_TASK': {
-      const updatedTasks = state.tasks.map(task =>
-        task.id === action.payload ? { ...task, archived: true, updatedAt: new Date() } : task
-      );
-      return {
-        ...state,
-        tasks: updatedTasks,
-        stats: getTaskStats(updatedTasks),
-      };
-    }
-
     case 'TOGGLE_IMPORTANT': {
       const updatedTasks = state.tasks.map(task =>
         task.id === action.payload 
@@ -142,9 +152,6 @@ function taskReducer(state: TaskState, action: TaskAction): TaskState {
     
     case 'SET_SELECTED_CATEGORY':
       return { ...state, selectedCategory: action.payload };
-    
-    case 'SET_SHOW_ARCHIVED':
-      return { ...state, showArchived: action.payload };
     
     case 'UPDATE_SETTINGS':
       return {
@@ -174,14 +181,13 @@ interface TaskContextType {
   addTask: (input: string) => void;
   addTaskWithPriority: (input: string, priority: 'low' | 'medium' | 'high') => void;
   updateTask: (task: Task) => void;
+  updateTaskStatus: (id: string, status: 'open' | 'in-progress' | 'done') => void;
   deleteTask: (id: string) => void;
   toggleTask: (id: string) => void;
-  archiveTask: (id: string) => void;
   toggleImportant: (id: string) => void;
   setViewMode: (mode: ViewMode) => void;
   setSearchTerm: (term: string) => void;
   setSelectedCategory: (category: string | null) => void;
-  setShowArchived: (show: boolean) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
 }
 
@@ -227,12 +233,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (state.selectedCategory) {
       // Show all tasks in selected category regardless of date
       filtered = filtered.filter(task => task.category === state.selectedCategory);
-    } else if (state.showArchived) {
-      // Show all archived tasks regardless of date
-      filtered = filtered.filter(task => task.archived);
     } else {
-      // Default: show non-archived tasks and apply view mode filtering
-      filtered = filtered.filter(task => !task.archived);
+      // Default: apply view mode filtering
       filtered = filterTasks(filtered, state.viewMode, state.searchTerm);
     }
     
@@ -252,6 +254,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const updateTask = (task: Task) => {
     dispatch({ type: 'UPDATE_TASK', payload: task });
   };
+
+  const updateTaskStatus = (id: string, status: 'open' | 'in-progress' | 'done') => {
+    dispatch({ type: 'UPDATE_TASK_STATUS', payload: { id, status } });
+  };
   
   const deleteTask = (id: string) => {
     dispatch({ type: 'DELETE_TASK', payload: id });
@@ -261,10 +267,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'TOGGLE_TASK', payload: id });
   };
   
-  const archiveTask = (id: string) => {
-    dispatch({ type: 'ARCHIVE_TASK', payload: id });
-  };
-
   const toggleImportant = (id: string) => {
     dispatch({ type: 'TOGGLE_IMPORTANT', payload: id });
   };
@@ -280,10 +282,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const setSelectedCategory = (category: string | null) => {
     dispatch({ type: 'SET_SELECTED_CATEGORY', payload: category });
   };
-
-  const setShowArchived = (show: boolean) => {
-    dispatch({ type: 'SET_SHOW_ARCHIVED', payload: show });
-  };
   
   const updateSettings = (settings: Partial<AppSettings>) => {
     dispatch({ type: 'UPDATE_SETTINGS', payload: settings });
@@ -296,14 +294,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     addTask,
     addTaskWithPriority,
     updateTask,
+    updateTaskStatus,
     deleteTask,
     toggleTask,
-    archiveTask,
     toggleImportant,
     setViewMode,
     setSearchTerm,
     setSelectedCategory,
-    setShowArchived,
     updateSettings,
   };
   

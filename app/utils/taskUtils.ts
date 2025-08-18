@@ -81,13 +81,13 @@ export function createTask(input: string, priority?: 'low' | 'medium' | 'high'):
     id: Date.now().toString(),
     title: parsed.title,
     completed: false,
+    status: 'open', // Always start with open status
     category: parsed.category,
     dueDate: dueDate,
     priority: priority || parsed.priority,
     tags: parsed.tags,
     createdAt: new Date(),
     updatedAt: new Date(),
-    archived: false,
   };
 }
 
@@ -103,7 +103,7 @@ export function getTaskStats(tasks: Task[]): {
   const stats = {
     total: tasks.length,
     completed: tasks.filter(t => t.completed).length,
-    pending: tasks.filter(t => !t.completed && !t.archived).length,
+    pending: tasks.filter(t => !t.completed).length,
     overdue: tasks.filter(t => !t.completed && t.dueDate && t.dueDate < now).length,
     weeklyCompletions: [0, 0, 0, 0, 0, 0, 0], // Last 7 days
     categoryBreakdown: {} as { [key: string]: number },
@@ -120,16 +120,14 @@ export function getTaskStats(tasks: Task[]): {
   
   // Calculate category breakdown
   tasks.forEach(task => {
-    if (!task.archived) {
-      stats.categoryBreakdown[task.category] = (stats.categoryBreakdown[task.category] || 0) + 1;
-    }
+    stats.categoryBreakdown[task.category] = (stats.categoryBreakdown[task.category] || 0) + 1;
   });
   
   return stats;
 }
 
 export function filterTasks(tasks: Task[], viewMode: string, searchTerm?: string): Task[] {
-  let filtered = tasks.filter(t => !t.archived);
+  let filtered = tasks;
   
   // Filter by view mode
   switch (viewMode) {

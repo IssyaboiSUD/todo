@@ -7,11 +7,17 @@ import { useTaskContext } from '../contexts/TaskContext';
 
 export default function Stats() {
   const { state } = useTaskContext();
-  const { stats } = state;
+  const { stats, tasks } = state;
 
   const completionRate = stats.total > 0 ? (stats.completed / stats.total) * 100 : 0;
   const weeklyTotal = stats.weeklyCompletions.reduce((sum, count) => sum + count, 0);
   const averageDaily = weeklyTotal / 7;
+
+  // Calculate status breakdown
+  const statusBreakdown = tasks.reduce((acc, task) => {
+    acc[task.status] = (acc[task.status] || 0) + 1;
+    return acc;
+  }, {} as { [key: string]: number });
 
   const statCards = [
     {
@@ -123,7 +129,7 @@ export default function Stats() {
           </div>
         </motion.div>
 
-        {/* Weekly Activity */}
+        {/* Status Breakdown */}
         <motion.div
           initial={{ x: 20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -131,33 +137,80 @@ export default function Stats() {
           className="glass rounded-2xl p-6"
         >
           <div className="flex items-center gap-3 mb-6">
-            <Calendar className="w-6 h-6 text-primary-500" />
+            <BarChart3 className="w-6 h-6 text-primary-500" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Weekly Activity
+              Status Breakdown
             </h3>
           </div>
           
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                Average daily completions
-              </span>
-              <span className="font-semibold text-gray-900 dark:text-white">
-                {averageDaily.toFixed(1)}
-              </span>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                This week's total
-              </span>
-              <span className="font-semibold text-gray-900 dark:text-white">
-                {weeklyTotal}
-              </span>
-            </div>
+            {Object.entries(statusBreakdown).map(([status, count]) => {
+              const percentage = stats.total > 0 ? (count / stats.total) * 100 : 0;
+              const statusConfig = {
+                'open': { color: 'bg-gray-500', label: 'Open' },
+                'in-progress': { color: 'bg-blue-500', label: 'In Progress' },
+                'done': { color: 'bg-green-500', label: 'Completed' },
+              };
+              
+              return (
+                <div key={status} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {statusConfig[status as keyof typeof statusConfig]?.label || status}
+                    </span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {count} ({percentage.toFixed(1)}%)
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <motion.div
+                      className={`h-2 rounded-full ${statusConfig[status as keyof typeof statusConfig]?.color}`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${percentage}%` }}
+                      transition={{ duration: 0.8, delay: 0.6 }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </motion.div>
       </div>
+
+      {/* Weekly Activity */}
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.6 }}
+        className="glass rounded-2xl p-6"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <Calendar className="w-6 h-6 text-primary-500" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Weekly Activity
+          </h3>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Average daily completions
+            </span>
+            <span className="font-semibold text-gray-900 dark:text-white">
+              {averageDaily.toFixed(1)}
+            </span>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              This week's total
+            </span>
+            <span className="font-semibold text-gray-900 dark:text-white">
+              {weeklyTotal}
+            </span>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Weekly Chart */}
       <motion.div
