@@ -10,7 +10,7 @@ interface CalendarPickerProps {
   onChange: (date: Date | undefined) => void;
   onClose: () => void;
   isOpen: boolean;
-  triggerRef?: React.RefObject<HTMLElement | HTMLButtonElement>;
+  triggerRef?: React.RefObject<HTMLElement | HTMLButtonElement | null>;
 }
 
 export default function CalendarPicker({ value, onChange, onClose, isOpen, triggerRef }: CalendarPickerProps) {
@@ -77,7 +77,7 @@ export default function CalendarPicker({ value, onChange, onClose, isOpen, trigg
     }
   }, [isOpen, triggerRef]);
 
-  // Click outside handler for status dropdown
+  // Click outside handler for calendar
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
