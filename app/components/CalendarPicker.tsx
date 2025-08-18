@@ -10,7 +10,7 @@ interface CalendarPickerProps {
   onChange: (date: Date | undefined) => void;
   onClose: () => void;
   isOpen: boolean;
-  triggerRef?: React.RefObject<HTMLElement | HTMLButtonElement | null>;
+  triggerRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 export default function CalendarPicker({ value, onChange, onClose, isOpen, triggerRef }: CalendarPickerProps) {

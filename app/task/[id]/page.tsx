@@ -164,12 +164,11 @@ export default function TaskDetailPage() {
     }
   };
 
-  const handleDueDateChange = (dateString: string) => {
+  const handleDueDateChange = (date: Date | undefined) => {
     if (editedTask) {
-      const newDate = dateString ? new Date(dateString) : undefined;
       setEditedTask({
         ...editedTask,
-        dueDate: newDate,
+        dueDate: date,
         updatedAt: new Date()
       });
     }
