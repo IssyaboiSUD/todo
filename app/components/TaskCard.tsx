@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSwipeable } from 'react-swipeable';
 import { useRouter } from 'next/navigation';
@@ -33,7 +34,12 @@ export default function TaskCard({ task, index }: TaskCardProps) {
   const [showActions, setShowActions] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [actionMenuPosition, setActionMenuPosition] = useState({ top: 0, left: 0 });
   const statusDropdownRef = useRef<HTMLDivElement>(null);
+  const statusButtonRef = useRef<HTMLButtonElement>(null);
+  const actionMenuRef = useRef<HTMLDivElement>(null);
+  const actionButtonRef = useRef<HTMLButtonElement>(null);
 
   const priorityColors = {
     high: 'text-red-500',
@@ -73,6 +79,11 @@ export default function TaskCard({ task, index }: TaskCardProps) {
   // Click outside handler for status dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Check if the click target is the status button itself
+      if (statusButtonRef.current && statusButtonRef.current.contains(event.target as Node)) {
+        return; // Don't close if clicking the button itself
+      }
+      
       if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
         setShowStatusDropdown(false);
       }
@@ -87,6 +98,67 @@ export default function TaskCard({ task, index }: TaskCardProps) {
     };
   }, [showStatusDropdown]);
 
+  // Click outside handler for action menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Check if the click target is the action button itself
+      if (actionButtonRef.current && actionButtonRef.current.contains(event.target as Node)) {
+        return; // Don't close if clicking the button itself
+      }
+      
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+        setShowActions(false);
+      }
+    };
+
+    if (showActions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showActions]);
+
+  // Update dropdown positions on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (showStatusDropdown && statusButtonRef.current) {
+        const rect = statusButtonRef.current.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + 8,
+          left: rect.left
+        });
+      }
+      if (showActions && actionButtonRef.current) {
+        const rect = actionButtonRef.current.getBoundingClientRect();
+        setActionMenuPosition({
+          top: rect.bottom + 8,
+          left: rect.right - 160
+        });
+      }
+    };
+
+    if (showStatusDropdown || showActions) {
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      window.addEventListener('resize', handleScroll, { passive: true });
+    }
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [showStatusDropdown, showActions]);
+
+  // Debug state changes
+  useEffect(() => {
+    console.log('Status dropdown state changed to:', showStatusDropdown);
+  }, [showStatusDropdown]);
+
+  useEffect(() => {
+    console.log('Action menu state changed to:', showActions);
+  }, [showActions]);
+
   const handleSwipe = (direction: 'left' | 'right') => {
     if (direction === 'left') {
       deleteTask(task.id);
@@ -98,6 +170,50 @@ export default function TaskCard({ task, index }: TaskCardProps) {
   const handleStatusChange = (newStatus: 'open' | 'in-progress' | 'done') => {
     updateTaskStatus(task.id, newStatus);
     setShowStatusDropdown(false);
+  };
+
+  const handleStatusDropdownToggle = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+    console.log('Status dropdown toggle clicked, current state:', showStatusDropdown);
+    
+    if (showStatusDropdown) {
+      // If dropdown is already open, just close it
+      console.log('Closing status dropdown');
+      setShowStatusDropdown(false);
+    } else {
+      // If dropdown is closed, open it and calculate position
+      console.log('Opening status dropdown');
+      if (statusButtonRef.current) {
+        const rect = statusButtonRef.current.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + 8,
+          left: rect.left
+        });
+      }
+      setShowStatusDropdown(true);
+    }
+  };
+
+  const handleActionMenuToggle = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+    console.log('Action menu toggle clicked, current state:', showActions);
+    
+    if (showActions) {
+      // If menu is already open, just close it
+      console.log('Closing action menu');
+      setShowActions(false);
+    } else {
+      // If menu is closed, open it and calculate position
+      console.log('Opening action menu');
+      if (actionButtonRef.current) {
+        const rect = actionButtonRef.current.getBoundingClientRect();
+        setActionMenuPosition({
+          top: rect.bottom + 8,
+          left: rect.right - 160 // Align to right edge, assuming 160px width
+        });
+      }
+      setShowActions(true);
+    }
   };
 
   const swipeHandlers = useSwipeable({
@@ -169,9 +285,10 @@ export default function TaskCard({ task, index }: TaskCardProps) {
                 )}
 
                 {/* Status Dropdown */}
-                <div className="mt-3 relative" ref={statusDropdownRef}>
+                <div className="mt-3">
                   <button
-                    onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                    ref={statusButtonRef}
+                    onClick={handleStatusDropdownToggle}
                     className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 hover:shadow-md ${
                       currentStatus?.color || ''
                     }`}
@@ -185,14 +302,22 @@ export default function TaskCard({ task, index }: TaskCardProps) {
                     }`} />
                   </button>
 
-                  {/* Status Dropdown Menu */}
+                </div>
+
+                {/* Status Dropdown Menu - Rendered as Portal */}
+                {typeof window !== 'undefined' && createPortal(
                   <AnimatePresence>
                     {showStatusDropdown && (
                       <motion.div
+                        ref={statusDropdownRef}
                         initial={{ opacity: 0, scale: 0.95, y: -10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        className="absolute top-full left-0 mt-2 glass rounded-xl shadow-lg border border-white/20 dark:border-gray-800/50 z-50 min-w-[160px]"
+                        className="fixed glass rounded-xl shadow-lg border border-white/20 dark:border-gray-800/50 z-[9999] min-w-[160px]"
+                        style={{
+                          top: dropdownPosition.top,
+                          left: dropdownPosition.left
+                        }}
                       >
                         <div className="p-2 space-y-1">
                           {statusOptions.map((option) => (
@@ -212,8 +337,9 @@ export default function TaskCard({ task, index }: TaskCardProps) {
                         </div>
                       </motion.div>
                     )}
-                  </AnimatePresence>
-                </div>
+                  </AnimatePresence>,
+                  document.body
+                )}
 
                 {/* Tags */}
                 {task.tags.length > 0 && (
@@ -254,7 +380,8 @@ export default function TaskCard({ task, index }: TaskCardProps) {
 
                 {/* More Actions */}
                 <button
-                  onClick={() => setShowActions(!showActions)}
+                  ref={actionButtonRef}
+                  onClick={handleActionMenuToggle}
                   className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
                   <MoreVertical className="w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -291,40 +418,48 @@ export default function TaskCard({ task, index }: TaskCardProps) {
           </div>
         </div>
 
-        {/* Action Menu */}
-        <AnimatePresence>
-          {showActions && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="absolute top-full right-0 mt-2 glass rounded-xl shadow-lg border border-white/20 dark:border-gray-800/50 z-10"
-            >
-              <div className="p-2 space-y-1">
-                <button
-                  onClick={() => {
-                    router.push(`/task/${task.id}`);
-                    setShowActions(false);
-                  }}
-                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 transition-colors"
-                >
-                  <Edit className="w-4 h-4" />
-                  View Details
-                </button>
-                <button
-                  onClick={() => {
-                    deleteTask(task.id);
-                    setShowActions(false);
-                  }}
-                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 text-sm transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Action Menu - Rendered as Portal */}
+        {typeof window !== 'undefined' && createPortal(
+          <AnimatePresence>
+            {showActions && (
+              <motion.div
+                ref={actionMenuRef}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="fixed glass rounded-xl shadow-lg border border-white/20 dark:border-gray-800/50 z-[9999] min-w-[160px]"
+                style={{
+                  top: actionMenuPosition.top,
+                  left: actionMenuPosition.left
+                }}
+              >
+                <div className="p-2 space-y-1">
+                  <button
+                    onClick={() => {
+                      router.push(`/task/${task.id}`);
+                      setShowActions(false);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    View Details
+                  </button>
+                  <button
+                    onClick={() => {
+                      deleteTask(task.id);
+                      setShowActions(false);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 text-sm transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
       </motion.div>
 
       {/* Edit Task Modal */}

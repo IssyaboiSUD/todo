@@ -28,12 +28,20 @@ export function parseTaskInput(input: string): {
   dueDate?: Date;
   priority: 'low' | 'medium' | 'high';
   tags: string[];
+  repeat?: 'daily' | 'weekly' | 'monthly' | 'yearly';
 } {
   const lowerInput = input.toLowerCase();
   
   // Parse date using chrono-node
   const parsedDate = parse(input);
   const dueDate = parsedDate.length > 0 ? parsedDate[0].start.date() : undefined;
+  
+  // Parse repeat option
+  let repeat: 'daily' | 'weekly' | 'monthly' | 'yearly' | undefined;
+  const repeatMatch = input.match(/repeat:(daily|weekly|monthly|yearly)/i);
+  if (repeatMatch) {
+    repeat = repeatMatch[1] as 'daily' | 'weekly' | 'monthly' | 'yearly';
+  }
   
   // Auto-categorize based on keywords
   let category = 'personal'; // default
@@ -55,10 +63,13 @@ export function parseTaskInput(input: string): {
   // Extract tags (words starting with #)
   const tags = input.match(/#\w+/g)?.map(tag => tag.slice(1)) || [];
   
-  // Clean title (remove date and tags)
+  // Clean title (remove date, tags, and repeat)
   let title = input;
   if (dueDate) {
     title = title.replace(parsedDate[0].text, '').trim();
+  }
+  if (repeatMatch) {
+    title = title.replace(repeatMatch[0], '').trim();
   }
   title = title.replace(/#\w+/g, '').trim();
   
@@ -68,6 +79,7 @@ export function parseTaskInput(input: string): {
     dueDate,
     priority,
     tags,
+    repeat,
   };
 }
 
@@ -85,6 +97,7 @@ export function createTask(input: string, priority?: 'low' | 'medium' | 'high'):
     category: parsed.category,
     dueDate: dueDate,
     priority: priority || parsed.priority,
+    repeat: parsed.repeat,
     tags: parsed.tags,
     notes: '',
     createdAt: new Date(),

@@ -23,7 +23,7 @@ export default function TaskDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { state, updateTask, updateTaskStatus } = useTaskContext();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
   const [editedTask, setEditedTask] = useState<Task | null>(null);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
@@ -210,7 +210,7 @@ export default function TaskDetailPage() {
                 <ArrowLeft className="w-5 h-5 text-gray-500" />
               </button>
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Task Details
+                {isEditing ? 'Edit Task' : 'Task Details'}
               </h1>
             </div>
             

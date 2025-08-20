@@ -22,9 +22,38 @@ export default function Calendar() {
   const daysInMonth = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   const getTasksForDate = (date: Date) => {
-    return state.tasks.filter(task => 
-      task.dueDate && isSameDay(new Date(task.dueDate), date)
-    );
+    return state.tasks.filter(task => {
+      if (!task.dueDate) return false;
+      
+      // Check if task is due on this exact date
+      if (isSameDay(new Date(task.dueDate), date)) return true;
+      
+      // Check if task repeats and should appear on this date
+      if (task.repeat) {
+        const taskDate = new Date(task.dueDate);
+        const currentDate = new Date(date);
+        
+        switch (task.repeat) {
+          case 'daily':
+            return currentDate >= taskDate; // Daily tasks appear on all dates after their start date
+          case 'weekly':
+            // Check if it's the same day of the week and after the start date
+            return taskDate.getDay() === currentDate.getDay() && currentDate >= taskDate;
+          case 'monthly':
+            // Check if it's the same day of the month and after the start date
+            return taskDate.getDate() === currentDate.getDate() && currentDate >= taskDate;
+          case 'yearly':
+            // Check if it's the same month and day and after the start date
+            return taskDate.getMonth() === currentDate.getMonth() && 
+                   taskDate.getDate() === currentDate.getDate() && 
+                   currentDate >= taskDate;
+          default:
+            return false;
+        }
+      }
+      
+      return false;
+    });
   };
 
   const getTodayTasks = () => {
@@ -162,21 +191,27 @@ export default function Calendar() {
                 
                 {/* Tasks for this day */}
                 <div className="space-y-0.5 sm:space-y-1">
-                  {tasksForDay.slice(0, 2).map((task) => (
-                    <div
-                      key={task.id}
-                      className={`text-xs p-0.5 sm:p-1 rounded truncate ${
-                        task.completed 
-                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 line-through' 
-                          : task.priority === 'high'
-                            ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'
-                            : 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                      }`}
-                      title={task.title}
-                    >
-                      {task.title}
-                    </div>
-                  ))}
+                  {tasksForDay.slice(0, 2).map((task) => {
+                    const isRepeating = task.repeat && !isSameDay(new Date(task.dueDate!), day);
+                    return (
+                      <div
+                        key={task.id}
+                        className={`text-xs p-0.5 sm:p-1 rounded truncate flex items-center gap-1 ${
+                          task.completed 
+                            ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 line-through' 
+                            : task.priority === 'high'
+                              ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                              : 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                        }`}
+                        title={`${task.title}${isRepeating ? ` (${task.repeat})` : ''}`}
+                      >
+                        {isRepeating && (
+                          <span className="text-[10px] opacity-70">🔄</span>
+                        )}
+                        <span className="truncate">{task.title}</span>
+                      </div>
+                    );
+                  })}
                   {tasksForDay.length > 2 && (
                     <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
                       +{tasksForDay.length - 2} more

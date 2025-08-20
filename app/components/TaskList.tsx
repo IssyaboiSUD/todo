@@ -341,7 +341,10 @@ export default function TaskList() {
               </div>
             )}
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <motion.div 
+              className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8"
+              layout="position"
+            >
               {statusConfig
                 .filter(status => statusFilter === 'all' || statusFilter === status.key)
                 .map((status) => {
@@ -349,7 +352,11 @@ export default function TaskList() {
                 const tasks = filteredTasksByStatus[status.key as keyof typeof filteredTasksByStatus] || [];
                 
                 return (
-                  <div key={status.key} className="kanban-column">
+                  <motion.div 
+                    key={status.key} 
+                    className="kanban-column"
+                    layout="position"
+                  >
                     {/* Status Header */}
                     <div className={`status-header flex items-center gap-3 p-4 rounded-xl mb-4 ${status.color} ${
                       statusFilter !== 'all' && statusFilter === status.key ? 'ring-2 ring-primary-500 ring-opacity-50' : ''
@@ -370,39 +377,61 @@ export default function TaskList() {
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, status.key as 'open' | 'in-progress' | 'done')}
                     >
-                      <AnimatePresence>
+                      <AnimatePresence mode="popLayout">
                         {tasks.length === 0 ? (
                           <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
+                            key="empty-state"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.2 }}
                             className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm"
                           >
-                            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <div className="w-12 h-12 bg-gray-100 dark:text-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
                               <Icon className="w-6 h-6 text-gray-400" />
                             </div>
                             Drop here
                           </motion.div>
                         ) : (
                           tasks.map((task, index) => (
-                            <div
+                            <motion.div
                               key={task.id}
-                              draggable
-                              onDragStart={(e) => handleDragStart(e, task.id)}
-                              onDragEnd={handleDragEnd}
-                              className={`draggable-task transition-all duration-200 ${
-                                draggedTaskId === task.id ? 'opacity-50' : ''
-                              }`}
+                              layoutId={task.id}
+                              initial={false}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                              transition={{ 
+                                type: "spring", 
+                                damping: 25, 
+                                stiffness: 300,
+                                duration: 0.2
+                              }}
+                              className="origin-center"
+                              style={{ 
+                                // Ensure stable positioning during animations
+                                position: 'relative',
+                                zIndex: draggedTaskId === task.id ? 10 : 1
+                              }}
                             >
-                              <TaskCard key={task.id} task={task} index={index} />
-                            </div>
+                              <div
+                                draggable
+                                onDragStart={(e: React.DragEvent) => handleDragStart(e, task.id)}
+                                onDragEnd={() => handleDragEnd()}
+                                className={`draggable-task ${
+                                  draggedTaskId === task.id ? 'opacity-50' : ''
+                                }`}
+                              >
+                                <TaskCard task={task} index={index} />
+                              </div>
+                            </motion.div>
                           ))
                         )}
                       </AnimatePresence>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           </>
         ) : (
           /* Traditional List View - for important tab and list mode */
