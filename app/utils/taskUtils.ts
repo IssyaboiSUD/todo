@@ -148,7 +148,7 @@ export function filterTasks(tasks: Task[], viewMode: string, searchTerm?: string
     case 'today':
       filtered = filtered.filter(t => 
         (t.dueDate && isToday(t.dueDate)) || 
-        (t.dueDate && t.dueDate < new Date() && t.status !== 'done')
+        (t.dueDate && t.dueDate < new Date())
       );
       break;
     case 'upcoming':
@@ -218,6 +218,16 @@ export function getCategoryIcon(category: string): string {
 
 export function isTaskOverdue(task: Task): boolean {
   if (!task.dueDate || task.status === 'done') {
+    return false;
+  }
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const taskDate = new Date(task.dueDate.getFullYear(), task.dueDate.getMonth(), task.dueDate.getDate());
+  return taskDate < today;
+}
+
+export function isTaskOverdueOrWasOverdue(task: Task): boolean {
+  if (!task.dueDate) {
     return false;
   }
   const now = new Date();

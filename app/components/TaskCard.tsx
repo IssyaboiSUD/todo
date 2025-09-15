@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { Task } from '../types';
 import { useTaskContext } from '../contexts/TaskContext';
-import { formatDueDate, getCategoryColor, getCategoryIcon, isTaskOverdue } from '../utils/taskUtils';
+import { formatDueDate, getCategoryColor, getCategoryIcon, isTaskOverdue, isTaskOverdueOrWasOverdue } from '../utils/taskUtils';
 import EditTaskModal from './EditTaskModal';
 
 interface TaskCardProps {
@@ -409,7 +409,9 @@ export default function TaskCard({ task, index }: TaskCardProps) {
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   <span className={isTaskOverdue(task) ? 'text-red-500 font-semibold' : ''}>
-                    {isTaskOverdue(task) ? 'Overdue' : formatDueDate(task.dueDate)}
+                    {isTaskOverdue(task) ? 'Overdue' : 
+                     isTaskOverdueOrWasOverdue(task) && task.status === 'done' ? 'Was Overdue' : 
+                     formatDueDate(task.dueDate)}
                   </span>
                 </div>
               )}

@@ -69,9 +69,9 @@ export default function TaskList() {
   const kanbanTasks = shouldShowKanban 
     ? state.tasks.filter(task => {
         if (state.viewMode === 'today') {
-          // Today: show tasks due today OR overdue tasks
+          // Today: show tasks due today OR overdue tasks (including completed overdue tasks)
           return (task.dueDate && isToday(new Date(task.dueDate))) || 
-                 (task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done');
+                 (task.dueDate && new Date(task.dueDate) < new Date());
         } else if (state.viewMode === 'upcoming') {
           // Upcoming: show tasks due after today
           return task.dueDate && new Date(task.dueDate) > new Date();
