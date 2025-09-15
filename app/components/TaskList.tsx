@@ -7,6 +7,7 @@ import { isToday } from 'date-fns';
 import { useTaskContext } from '../contexts/TaskContext';
 import TaskCard from './TaskCard';
 import AddTaskModal from './AddTaskModal';
+import { sortTasksWithOverdueFirst } from '../utils/taskUtils';
 
 const statusConfig = [
   { 
@@ -68,8 +69,9 @@ export default function TaskList() {
   const kanbanTasks = shouldShowKanban 
     ? state.tasks.filter(task => {
         if (state.viewMode === 'today') {
-          // Today: show tasks due today
-          return task.dueDate && isToday(new Date(task.dueDate));
+          // Today: show tasks due today OR overdue tasks
+          return (task.dueDate && isToday(new Date(task.dueDate))) || 
+                 (task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done');
         } else if (state.viewMode === 'upcoming') {
           // Upcoming: show tasks due after today
           return task.dueDate && new Date(task.dueDate) > new Date();
@@ -79,11 +81,11 @@ export default function TaskList() {
     : state.tasks;
   const listTasks = filteredTasks;
 
-  // Group tasks by status for Kanban board
+  // Group tasks by status for Kanban board and sort with overdue first
   const tasksByStatus = {
-    open: kanbanTasks.filter(task => task.status === 'open'),
-    'in-progress': kanbanTasks.filter(task => task.status === 'in-progress'),
-    done: kanbanTasks.filter(task => task.status === 'done'),
+    open: sortTasksWithOverdueFirst(kanbanTasks.filter(task => task.status === 'open')),
+    'in-progress': sortTasksWithOverdueFirst(kanbanTasks.filter(task => task.status === 'in-progress')),
+    done: sortTasksWithOverdueFirst(kanbanTasks.filter(task => task.status === 'done')),
   };
 
   // Debug logging
@@ -189,7 +191,7 @@ export default function TaskList() {
           <p className="text-gray-600 dark:text-gray-400">
             {shouldShowKanban ? kanbanTasks.length : listTasks.length} tasks
             {!shouldShowKanban && tasksByStatus.done.length > 0 && ` • ${tasksByStatus.done.length} completed`}
-            {shouldShowKanban && state.viewMode === 'today' && ` • Due today`}
+            {shouldShowKanban && state.viewMode === 'today' && ` • Due today & overdue`}
             {shouldShowKanban && state.viewMode === 'upcoming' && ` • Upcoming`}
           </p>
         </div>
@@ -463,8 +465,8 @@ export default function TaskList() {
                   </button>
                 </motion.div>
               ) : (
-                listTasks
-                  .filter(task => statusFilter === 'all' || task.status === statusFilter)
+                sortTasksWithOverdueFirst(listTasks
+                  .filter(task => statusFilter === 'all' || task.status === statusFilter))
                   .map((task, index) => (
                     <TaskCard key={task.id} task={task} index={index} />
                   ))

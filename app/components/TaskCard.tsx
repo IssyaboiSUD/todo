@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { Task } from '../types';
 import { useTaskContext } from '../contexts/TaskContext';
-import { formatDueDate, getCategoryColor, getCategoryIcon } from '../utils/taskUtils';
+import { formatDueDate, getCategoryColor, getCategoryIcon, isTaskOverdue } from '../utils/taskUtils';
 import EditTaskModal from './EditTaskModal';
 
 interface TaskCardProps {
@@ -238,7 +238,11 @@ export default function TaskCard({ task, index }: TaskCardProps) {
     <>
       <motion.div
         {...swipeHandlers}
-        className="task-card relative"
+        className={`task-card relative ${
+          isTaskOverdue(task) 
+            ? 'border-l-4 border-red-500 bg-red-50/50 dark:bg-red-900/10' 
+            : ''
+        }`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
@@ -273,6 +277,9 @@ export default function TaskCard({ task, index }: TaskCardProps) {
                         : 'text-gray-900 dark:text-white'
                     }`}
                   >
+                    {isTaskOverdue(task) && (
+                      <span className="text-red-500 mr-1" title="Overdue task">⚠️</span>
+                    )}
                     {task.title}
                   </h3>
                   <div className="w-0 group-hover:w-full h-0.5 bg-primary-500 transition-all duration-300 ease-out mt-1" />
@@ -401,8 +408,8 @@ export default function TaskCard({ task, index }: TaskCardProps) {
               {task.dueDate && (
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  <span className={task.dueDate < new Date() && task.status !== 'done' ? 'text-red-500' : ''}>
-                    {formatDueDate(task.dueDate)}
+                  <span className={isTaskOverdue(task) ? 'text-red-500 font-semibold' : ''}>
+                    {isTaskOverdue(task) ? 'Overdue' : formatDueDate(task.dueDate)}
                   </span>
                 </div>
               )}

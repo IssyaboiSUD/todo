@@ -146,7 +146,10 @@ export function filterTasks(tasks: Task[], viewMode: string, searchTerm?: string
   // Filter by view mode
   switch (viewMode) {
     case 'today':
-      filtered = filtered.filter(t => t.dueDate && isToday(t.dueDate));
+      filtered = filtered.filter(t => 
+        (t.dueDate && isToday(t.dueDate)) || 
+        (t.dueDate && t.dueDate < new Date() && t.status !== 'done')
+      );
       break;
     case 'upcoming':
       filtered = filtered.filter(t => t.dueDate && t.dueDate > new Date());
@@ -211,4 +214,43 @@ export function getCategoryColor(category: string): string {
 export function getCategoryIcon(category: string): string {
   const cat = defaultCategories.find(c => c.id === category);
   return cat?.icon || 'Circle';
+}
+
+export function isTaskOverdue(task: Task): boolean {
+  if (!task.dueDate || task.status === 'done') {
+    return false;
+  }
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const taskDate = new Date(task.dueDate.getFullYear(), task.dueDate.getMonth(), task.dueDate.getDate());
+  return taskDate < today;
+}
+
+export function sortTasksWithOverdueFirst(tasks: Task[]): Task[] {
+  return tasks.sort((a, b) => {
+    const aOverdue = isTaskOverdue(a);
+    const bOverdue = isTaskOverdue(b);
+    
+    // Overdue tasks first
+    if (aOverdue && !bOverdue) return -1;
+    if (!aOverdue && bOverdue) return 1;
+    
+    // Within overdue/non-overdue groups, sort by priority then due date
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    const aPriority = priorityOrder[a.priority];
+    const bPriority = priorityOrder[b.priority];
+    
+    if (aPriority !== bPriority) {
+      return bPriority - aPriority;
+    }
+    
+    if (a.dueDate && b.dueDate) {
+      return a.dueDate.getTime() - b.dueDate.getTime();
+    }
+    
+    if (a.dueDate) return -1;
+    if (b.dueDate) return 1;
+    
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
 } 
