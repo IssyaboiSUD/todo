@@ -25,6 +25,7 @@ import {
 import { auth, db } from './firebase';
 import { Task, Category } from '../types';
 
+
 // Auth functions
 export const signIn = async (email: string, password: string) => {
   try {
@@ -195,6 +196,8 @@ export const subscribeToUserTasks = (
       } as Task);
     });
     callback(tasks);
+  }, (error) => {
+    console.error('Firebase listener error:', error);
   });
 };
 

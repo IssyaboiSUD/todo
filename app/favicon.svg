@@ -1,0 +1,20 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0284c7;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#bg)"/>
+  
+  <!-- Focus symbol - stylized F with focus rings -->
+  <g fill="white">
+    <!-- Main F letter -->
+    <path d="M10 8h10v2.5H12.5V14h6v2.5h-6V24H10V8z" fill="white" opacity="0.95"/>
+    
+    <!-- Focus rings for "focus" concept -->
+    <circle cx="22" cy="12" r="1.5" fill="none" stroke="white" stroke-width="1" opacity="0.6"/>
+    <circle cx="22" cy="12" r="0.5" fill="white" opacity="0.8"/>
+  </g>
+</svg>

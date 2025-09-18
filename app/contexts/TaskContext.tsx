@@ -117,7 +117,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'LOAD_TASKS', payload: [] });
       return;
     }
-
+    
     // Subscribe to real-time updates for user's tasks
     const unsubscribe = subscribeToUserTasks(user.uid, (tasks) => {
       dispatch({ type: 'LOAD_TASKS', payload: tasks });
@@ -170,12 +170,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     
     const newTask = createTask(input);
     
-    // Add to Firestore
-    const firestoreId = await addTaskToFirestore(user.uid, newTask);
-    if (firestoreId) {
-      // The real-time listener will update the local state
-      console.log('Task added successfully');
-    }
+    // Add to Firestore - real-time listener will update local state
+    await addTaskToFirestore(user.uid, newTask);
   };
   
   const addTaskWithPriority = async (input: string, priority: 'low' | 'medium' | 'high') => {
@@ -183,46 +179,33 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     
     const newTask = createTask(input, priority);
     
-    // Add to Firestore
-    const firestoreId = await addTaskToFirestore(user.uid, newTask);
-    if (firestoreId) {
-      // The real-time listener will update the local state
-      console.log('Task with priority added successfully');
-    }
+    // Add to Firestore - real-time listener will update local state
+    await addTaskToFirestore(user.uid, newTask);
   };
   
   const updateTask = async (task: Task) => {
     if (!user) return;
     
-    const success = await updateTaskInFirestore(task.id, task);
-    if (success) {
-      // The real-time listener will update the local state
-      console.log('Task updated successfully');
-    }
+    // Update in Firestore - real-time listener will update local state
+    await updateTaskInFirestore(task.id, task);
   };
 
   const updateTaskStatus = async (id: string, status: 'open' | 'in-progress' | 'done') => {
     if (!user) return;
     
-    const success = await updateTaskInFirestore(id, { 
+    // Update in Firestore - real-time listener will update local state
+    await updateTaskInFirestore(id, { 
       status, 
       completed: status === 'done',
       updatedAt: new Date()
     });
-    if (success) {
-      // The real-time listener will update the local state
-      console.log('Task status updated successfully');
-    }
   };
   
   const deleteTask = async (id: string) => {
     if (!user) return;
     
-    const success = await deleteTaskFromFirestore(id);
-    if (success) {
-      // The real-time listener will update the local state
-      console.log('Task deleted successfully');
-    }
+    // Delete from Firestore - real-time listener will update local state
+    await deleteTaskFromFirestore(id);
   };
   
   const toggleTask = async (id: string) => {
@@ -231,14 +214,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const task = state.tasks.find(t => t.id === id);
     if (!task) return;
     
-    const success = await updateTaskInFirestore(id, { 
+    // Update in Firestore - real-time listener will update local state
+    await updateTaskInFirestore(id, { 
       completed: !task.completed,
       status: !task.completed ? 'done' : 'open',
       updatedAt: new Date()
     });
-    if (success) {
-      console.log('Task toggled successfully');
-    }
   };
   
   const toggleImportant = async (id: string) => {
@@ -247,13 +228,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const task = state.tasks.find(t => t.id === id);
     if (!task) return;
     
-    const success = await updateTaskInFirestore(id, { 
+    // Update in Firestore - real-time listener will update local state
+    await updateTaskInFirestore(id, { 
       priority: task.priority === 'high' ? 'medium' : 'high',
       updatedAt: new Date()
     });
-    if (success) {
-      console.log('Task importance toggled successfully');
-    }
   };
   
   const setViewMode = (mode: ViewMode) => {
