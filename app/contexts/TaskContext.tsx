@@ -25,19 +25,12 @@ interface TaskState {
 }
 
 type TaskAction =
-  | { type: 'ADD_TASK'; payload: string }
-  | { type: 'ADD_TASK_WITH_PRIORITY'; payload: { input: string; priority: 'low' | 'medium' | 'high' } }
-  | { type: 'UPDATE_TASK'; payload: Task }
-  | { type: 'UPDATE_TASK_STATUS'; payload: { id: string; status: 'open' | 'in-progress' | 'done' } }
-  | { type: 'DELETE_TASK'; payload: string }
-  | { type: 'TOGGLE_TASK'; payload: string }
   | { type: 'SET_VIEW_MODE'; payload: ViewMode }
   | { type: 'SET_SEARCH_TERM'; payload: string }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'LOAD_TASKS'; payload: Task[] }
   | { type: 'LOAD_CATEGORIES'; payload: Category[] }
-  | { type: 'SET_SELECTED_CATEGORY'; payload: string | null }
-  | { type: 'TOGGLE_IMPORTANT'; payload: string };
+  | { type: 'SET_SELECTED_CATEGORY'; payload: string | null };
 
 const initialState: TaskState = {
   tasks: [],
@@ -46,9 +39,7 @@ const initialState: TaskState = {
   searchTerm: '',
   settings: {
     theme: 'system',
-    notifications: true,
-    soundEnabled: true,
-    autoArchive: false,
+    notifications: false,
     defaultCategory: 'personal',
   },
   stats: {
@@ -64,95 +55,7 @@ const initialState: TaskState = {
 
 function taskReducer(state: TaskState, action: TaskAction): TaskState {
   switch (action.type) {
-    case 'ADD_TASK': {
-      const newTask = createTask(action.payload);
-      const updatedTasks = [...state.tasks, newTask];
-      return {
-        ...state,
-        tasks: updatedTasks,
-        stats: getTaskStats(updatedTasks),
-      };
-    }
-    
-    case 'ADD_TASK_WITH_PRIORITY': {
-      const newTask = createTask(action.payload.input, action.payload.priority);
-      const updatedTasks = [...state.tasks, newTask];
-      return {
-        ...state,
-        tasks: updatedTasks,
-        stats: getTaskStats(updatedTasks),
-      };
-    }
-    
-    case 'UPDATE_TASK': {
-      const updatedTasks = state.tasks.map(task =>
-        task.id === action.payload.id ? { ...action.payload, updatedAt: new Date() } : task
-      );
-      return {
-        ...state,
-        tasks: updatedTasks,
-        stats: getTaskStats(updatedTasks),
-      };
-    }
-    
-    case 'UPDATE_TASK_STATUS': {
-      const updatedTasks = state.tasks.map(task =>
-        task.id === action.payload.id 
-          ? { 
-              ...task, 
-              status: action.payload.status, 
-              completed: action.payload.status === 'done', // Auto-complete when status is done
-              updatedAt: new Date() 
-            } 
-          : task
-      );
-      return {
-        ...state,
-        tasks: updatedTasks,
-        stats: getTaskStats(updatedTasks),
-      };
-    }
-    
-    case 'DELETE_TASK': {
-      const updatedTasks = state.tasks.filter(task => task.id !== action.payload);
-      return {
-        ...state,
-        tasks: updatedTasks,
-        stats: getTaskStats(updatedTasks),
-      };
-    }
-    
-    case 'TOGGLE_TASK': {
-      const updatedTasks = state.tasks.map(task =>
-        task.id === action.payload
-          ? { 
-              ...task, 
-              completed: !task.completed, 
-              // Only change status if it's currently "done" and we're uncompleting it
-              status: (!task.completed && task.status === 'done') ? 'open' : task.status,
-              updatedAt: new Date() 
-            }
-          : task
-      );
-      return {
-        ...state,
-        tasks: updatedTasks,
-        stats: getTaskStats(updatedTasks),
-      };
-    }
-    
-    case 'TOGGLE_IMPORTANT': {
-      const updatedTasks = state.tasks.map(task =>
-        task.id === action.payload 
-          ? { ...task, priority: task.priority === 'high' ? 'medium' : 'high' as 'low' | 'medium' | 'high', updatedAt: new Date() }
-          : task
-      );
-      return {
-        ...state,
-        tasks: updatedTasks,
-        stats: getTaskStats(updatedTasks),
-      };
-    }
+    // Remove local task manipulation - Firebase handles all task operations
     
     case 'SET_VIEW_MODE':
       return { ...state, viewMode: action.payload };
@@ -266,10 +169,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     
     const newTask = createTask(input);
-    const { id, ...taskData } = newTask;
     
     // Add to Firestore
-    const firestoreId = await addTaskToFirestore(user.uid, taskData);
+    const firestoreId = await addTaskToFirestore(user.uid, newTask);
     if (firestoreId) {
       // The real-time listener will update the local state
       console.log('Task added successfully');
@@ -280,10 +182,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     
     const newTask = createTask(input, priority);
-    const { id, ...taskData } = newTask;
     
     // Add to Firestore
-    const firestoreId = await addTaskToFirestore(user.uid, taskData);
+    const firestoreId = await addTaskToFirestore(user.uid, newTask);
     if (firestoreId) {
       // The real-time listener will update the local state
       console.log('Task with priority added successfully');

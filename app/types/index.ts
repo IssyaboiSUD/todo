@@ -34,8 +34,6 @@ export interface TaskStats {
 export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   notifications: boolean;
-  soundEnabled: boolean;
-  autoArchive: boolean;
   defaultCategory: string;
 }
 

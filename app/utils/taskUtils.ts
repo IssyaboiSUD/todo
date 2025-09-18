@@ -83,14 +83,13 @@ export function parseTaskInput(input: string): {
   };
 }
 
-export function createTask(input: string, priority?: 'low' | 'medium' | 'high'): Task {
+export function createTask(input: string, priority?: 'low' | 'medium' | 'high'): Omit<Task, 'id'> {
   const parsed = parseTaskInput(input);
   
   // If no date is provided, set to today
   const dueDate = parsed.dueDate || new Date();
   
   return {
-    id: Date.now().toString(),
     title: parsed.title,
     completed: false,
     status: 'open', // Always start with open status

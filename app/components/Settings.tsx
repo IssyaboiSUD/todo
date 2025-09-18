@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sun, Moon, Monitor, Bell, Volume2, Archive, Trash2 } from 'lucide-react';
+import { X, Sun, Moon, Monitor, Bell } from 'lucide-react';
 import { useTaskContext } from '../contexts/TaskContext';
 
 interface SettingsProps {
@@ -129,70 +129,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                       </button>
                     </div>
                     
-                    <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Volume2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                        <span className="text-sm font-medium">Sound Effects</span>
-                      </div>
-                      <button
-                        onClick={() => handleSettingChange('soundEnabled', !state.settings.soundEnabled)}
-                        className={`w-12 h-6 rounded-full transition-colors ${
-                          state.settings.soundEnabled ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                          state.settings.soundEnabled ? 'translate-x-6' : 'translate-x-1'
-                        }`} />
-                      </button>
-                    </div>
                   </div>
                 </div>
 
-                {/* Task Settings */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                    Task Management
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                        <span className="text-sm font-medium">Auto-archive completed tasks</span>
-                      </div>
-                      <button
-                        onClick={() => handleSettingChange('autoArchive', !state.settings.autoArchive)}
-                        className={`w-12 h-6 rounded-full transition-colors ${
-                          state.settings.autoArchive ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                          state.settings.autoArchive ? 'translate-x-6' : 'translate-x-1'
-                        }`} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Data Management */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                    Data Management
-                  </h3>
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => {
-                        if (confirm('Are you sure you want to clear all tasks? This action cannot be undone.')) {
-                          localStorage.removeItem('tasks');
-                          window.location.reload();
-                        }
-                      }}
-                      className="w-full flex items-center gap-3 p-3 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                      <span>Clear All Tasks</span>
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
           </motion.div>
