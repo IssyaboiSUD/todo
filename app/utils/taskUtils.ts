@@ -126,9 +126,14 @@ export function getTaskStats(tasks: Task[]): {
   // Calculate weekly completions
   const completedTasks = tasks.filter(t => t.completed);
   completedTasks.forEach(task => {
-    const daysAgo = Math.floor((now.getTime() - task.updatedAt.getTime()) / (1000 * 60 * 60 * 24));
+    const taskDate = new Date(task.updatedAt);
+    const daysAgo = Math.floor((now.getTime() - taskDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Only include tasks completed in the last 7 days
     if (daysAgo < 7) {
-      stats.weeklyCompletions[daysAgo]++;
+      // Get the day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+      const dayOfWeek = taskDate.getDay();
+      stats.weeklyCompletions[dayOfWeek]++;
     }
   });
   

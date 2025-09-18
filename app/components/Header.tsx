@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Settings, Sun, Moon, Monitor, Menu } from 'lucide-react';
+import { Search, Settings, Sun, Moon, Monitor, Menu, User, LogOut } from 'lucide-react';
 import { useTaskContext } from '../contexts/TaskContext';
+import { useAuth } from '../contexts/AuthContext';
 import { ViewMode } from '../types';
 import SettingsModal from './Settings';
+import AuthModal from './AuthModal';
 
 const navItems: { key: ViewMode; label: string; icon: string }[] = [
   { key: 'today', label: 'Today', icon: 'Calendar' },
@@ -21,9 +23,11 @@ interface HeaderProps {
 
 export default function Header({ onMobileMenuClick }: HeaderProps) {
   const { state, setViewMode, setSearchTerm, updateSettings } = useTaskContext();
+  const { user, logout } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   const handleSearch = (value: string) => {
     setSearchValue(value);
@@ -47,6 +51,10 @@ export default function Header({ onMobileMenuClick }: HeaderProps) {
       case 'dark': return <Moon className="w-4 h-4" />;
       default: return <Monitor className="w-4 h-4" />;
     }
+  };
+
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -134,6 +142,30 @@ export default function Header({ onMobileMenuClick }: HeaderProps) {
               >
                 <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
+
+              {/* Authentication */}
+              {user ? (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
+                    {user.email}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    title="Sign out"
+                  >
+                    <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsAuthOpen(true)}
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  title="Sign in"
+                >
+                  <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -160,6 +192,12 @@ export default function Header({ onMobileMenuClick }: HeaderProps) {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
       />
     </>
   );

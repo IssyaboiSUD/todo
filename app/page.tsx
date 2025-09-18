@@ -8,6 +8,7 @@ import Sidebar from './components/Sidebar';
 import TaskList from './components/TaskList';
 import Stats from './components/Stats';
 import Calendar from './components/Calendar';
+import AuthGuard from './components/AuthGuard';
 
 export default function Home() {
   const { state, setViewMode } = useTaskContext();
@@ -61,37 +62,39 @@ export default function Home() {
   }, [setViewMode]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header onMobileMenuClick={() => setIsMobileSidebarOpen(true)} />
-      
-      <div className="flex">
-        <Sidebar 
-          isMobileOpen={isMobileSidebarOpen}
-          onMobileClose={() => setIsMobileSidebarOpen(false)}
-        />
+    <AuthGuard>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header onMobileMenuClick={() => setIsMobileSidebarOpen(true)} />
         
-        <main className="flex-1 lg:ml-0">
-          {state.viewMode === 'stats' ? (
-            <Stats />
-          ) : state.viewMode === 'calendar' ? (
-            <Calendar />
-          ) : (
-            <TaskList />
-          )}
-        </main>
-      </div>
+        <div className="flex">
+          <Sidebar 
+            isMobileOpen={isMobileSidebarOpen}
+            onMobileClose={() => setIsMobileSidebarOpen(false)}
+          />
+          
+          <main className="flex-1 lg:ml-0">
+            {state.viewMode === 'stats' ? (
+              <Stats />
+            ) : state.viewMode === 'calendar' ? (
+              <Calendar />
+            ) : (
+              <TaskList />
+            )}
+          </main>
+        </div>
 
-      {/* Keyboard shortcuts help - hidden on mobile */}
-      <div className="fixed bottom-4 left-4 text-xs text-gray-500 dark:text-gray-400 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg px-3 py-2 hidden md:block">
-        <div className="flex items-center gap-4">
-          <span>⌘1: Today</span>
-          <span>⌘2: Upcoming</span>
-          <span>⌘3: Calendar</span>
-          <span>⌘4: Important</span>
-          <span>⌘5: Stats</span>
-          <span>⌘N: New Task</span>
+        {/* Keyboard shortcuts help - hidden on mobile */}
+        <div className="fixed bottom-4 left-4 text-xs text-gray-500 dark:text-gray-400 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg px-3 py-2 hidden md:block">
+          <div className="flex items-center gap-4">
+            <span>⌘1: Today</span>
+            <span>⌘2: Upcoming</span>
+            <span>⌘3: Calendar</span>
+            <span>⌘4: Important</span>
+            <span>⌘5: Stats</span>
+            <span>⌘N: New Task</span>
+          </div>
         </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

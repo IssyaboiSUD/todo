@@ -3,6 +3,16 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { Task, Category, ViewMode, AppSettings } from '../types';
 import { defaultCategories, createTask, getTaskStats, filterTasks } from '../utils/taskUtils';
+import { useAuth } from './AuthContext';
+import { 
+  getUserTasks, 
+  addTask as addTaskToFirestore, 
+  updateTask as updateTaskInFirestore, 
+  deleteTask as deleteTaskFromFirestore,
+  subscribeToUserTasks,
+  getUserSettings,
+  updateUserSettings
+} from '../lib/firebaseService';
 
 interface TaskState {
   tasks: Task[];
@@ -178,13 +188,13 @@ interface TaskContextType {
   state: TaskState;
   dispatch: React.Dispatch<TaskAction>;
   filteredTasks: Task[];
-  addTask: (input: string) => void;
-  addTaskWithPriority: (input: string, priority: 'low' | 'medium' | 'high') => void;
-  updateTask: (task: Task) => void;
-  updateTaskStatus: (id: string, status: 'open' | 'in-progress' | 'done') => void;
-  deleteTask: (id: string) => void;
-  toggleTask: (id: string) => void;
-  toggleImportant: (id: string) => void;
+  addTask: (input: string) => Promise<void>;
+  addTaskWithPriority: (input: string, priority: 'low' | 'medium' | 'high') => Promise<void>;
+  updateTask: (task: Task) => Promise<void>;
+  updateTaskStatus: (id: string, status: 'open' | 'in-progress' | 'done') => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+  toggleTask: (id: string) => Promise<void>;
+  toggleImportant: (id: string) => Promise<void>;
   setViewMode: (mode: ViewMode) => void;
   setSearchTerm: (term: string) => void;
   setSelectedCategory: (category: string | null) => void;
@@ -195,35 +205,44 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(taskReducer, initialState);
+  const { user } = useAuth();
   
-  // Load tasks from localStorage on mount
+  // Load tasks from Firebase when user logs in
   useEffect(() => {
-    const savedTasks = localStorage.getItem('tasks');
-    if (savedTasks) {
-      const tasks = JSON.parse(savedTasks).map((task: any) => ({
-        ...task,
-        dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-        createdAt: new Date(task.createdAt),
-        updatedAt: new Date(task.updatedAt),
-      }));
+    if (!user) {
+      // Clear tasks when user logs out
+      dispatch({ type: 'LOAD_TASKS', payload: [] });
+      return;
+    }
+
+    // Subscribe to real-time updates for user's tasks
+    const unsubscribe = subscribeToUserTasks(user.uid, (tasks) => {
       dispatch({ type: 'LOAD_TASKS', payload: tasks });
-    }
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // Load user settings from Firebase
+  useEffect(() => {
+    if (!user) return;
+
+    const loadSettings = async () => {
+      const settings = await getUserSettings(user.uid);
+      if (settings) {
+        dispatch({ type: 'UPDATE_SETTINGS', payload: settings });
+      }
+    };
+
+    loadSettings();
+  }, [user]);
+
+  // Save settings to Firebase whenever settings change (with user check)
+  useEffect(() => {
+    if (!user || !state.settings) return;
     
-    const savedSettings = localStorage.getItem('settings');
-    if (savedSettings) {
-      dispatch({ type: 'UPDATE_SETTINGS', payload: JSON.parse(savedSettings) });
-    }
-  }, []);
-  
-  // Save tasks to localStorage whenever tasks change
-  useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(state.tasks));
-  }, [state.tasks]);
-  
-  // Save settings to localStorage whenever settings change
-  useEffect(() => {
-    localStorage.setItem('settings', JSON.stringify(state.settings));
-  }, [state.settings]);
+    updateUserSettings(user.uid, state.settings);
+  }, [state.settings, user]);
   
   // Filter tasks based on current state
   const getFilteredTasks = () => {
@@ -243,32 +262,97 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   
   const filteredTasks = getFilteredTasks();
   
-  const addTask = (input: string) => {
-    dispatch({ type: 'ADD_TASK', payload: input });
+  const addTask = async (input: string) => {
+    if (!user) return;
+    
+    const newTask = createTask(input);
+    const { id, ...taskData } = newTask;
+    
+    // Add to Firestore
+    const firestoreId = await addTaskToFirestore(user.uid, taskData);
+    if (firestoreId) {
+      // The real-time listener will update the local state
+      console.log('Task added successfully');
+    }
   };
   
-  const addTaskWithPriority = (input: string, priority: 'low' | 'medium' | 'high') => {
-    dispatch({ type: 'ADD_TASK_WITH_PRIORITY', payload: { input, priority } });
+  const addTaskWithPriority = async (input: string, priority: 'low' | 'medium' | 'high') => {
+    if (!user) return;
+    
+    const newTask = createTask(input, priority);
+    const { id, ...taskData } = newTask;
+    
+    // Add to Firestore
+    const firestoreId = await addTaskToFirestore(user.uid, taskData);
+    if (firestoreId) {
+      // The real-time listener will update the local state
+      console.log('Task with priority added successfully');
+    }
   };
   
-  const updateTask = (task: Task) => {
-    dispatch({ type: 'UPDATE_TASK', payload: task });
+  const updateTask = async (task: Task) => {
+    if (!user) return;
+    
+    const success = await updateTaskInFirestore(task.id, task);
+    if (success) {
+      // The real-time listener will update the local state
+      console.log('Task updated successfully');
+    }
   };
 
-  const updateTaskStatus = (id: string, status: 'open' | 'in-progress' | 'done') => {
-    dispatch({ type: 'UPDATE_TASK_STATUS', payload: { id, status } });
+  const updateTaskStatus = async (id: string, status: 'open' | 'in-progress' | 'done') => {
+    if (!user) return;
+    
+    const success = await updateTaskInFirestore(id, { 
+      status, 
+      completed: status === 'done',
+      updatedAt: new Date()
+    });
+    if (success) {
+      // The real-time listener will update the local state
+      console.log('Task status updated successfully');
+    }
   };
   
-  const deleteTask = (id: string) => {
-    dispatch({ type: 'DELETE_TASK', payload: id });
+  const deleteTask = async (id: string) => {
+    if (!user) return;
+    
+    const success = await deleteTaskFromFirestore(id);
+    if (success) {
+      // The real-time listener will update the local state
+      console.log('Task deleted successfully');
+    }
   };
   
-  const toggleTask = (id: string) => {
-    dispatch({ type: 'TOGGLE_TASK', payload: id });
+  const toggleTask = async (id: string) => {
+    if (!user) return;
+    
+    const task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+    
+    const success = await updateTaskInFirestore(id, { 
+      completed: !task.completed,
+      status: !task.completed ? 'done' : 'open',
+      updatedAt: new Date()
+    });
+    if (success) {
+      console.log('Task toggled successfully');
+    }
   };
   
-  const toggleImportant = (id: string) => {
-    dispatch({ type: 'TOGGLE_IMPORTANT', payload: id });
+  const toggleImportant = async (id: string) => {
+    if (!user) return;
+    
+    const task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+    
+    const success = await updateTaskInFirestore(id, { 
+      priority: task.priority === 'high' ? 'medium' : 'high',
+      updatedAt: new Date()
+    });
+    if (success) {
+      console.log('Task importance toggled successfully');
+    }
   };
   
   const setViewMode = (mode: ViewMode) => {
