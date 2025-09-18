@@ -188,26 +188,3 @@ MIT License - see LICENSE file for details
 
 **Focus** - Stay focused, get things done. ✨
 
-## Environment Setup
-
-### 1. Copy Environment Variables
-```bash
-cp .env.example .env.local
-```
-
-### 2. Configure Firebase
-Fill in your Firebase configuration in `.env.local`:
-
-- Get your Firebase config from [Firebase Console](https://console.firebase.google.com)
-- Go to Project Settings → General → Your apps
-- Copy the config values to `.env.local`
-
-### 3. Enable Authentication
-- Enable Google Sign-In in Firebase Console
-- Add authorized domains in Google Cloud Console
-- Configure OAuth consent screen
-
-### 4. Set up Firestore
-- Create a Firestore database in Firebase Console
-- Set up security rules for your collections
-
